@@ -7,12 +7,12 @@ from tkinter import *
 class mineland:
   def __init__(self, root, level):
     '''mineland 클래스 객체 init'''
-    self.images_list = [f'{i}' for i in range(0, 9)] + ['block', 'mine', 'flag', 'unknown']
+    self.images_list = [f'{i}' for i in range(0, 9)] + [f'{i}' for i in range(0, 9)] + ['block', 'mine', 'flag', 'unknown', 'neutral', 'dead', 'win']
     self.photo_dict = {image : PhotoImage(file=f'C:\\Users\\82102\\Desktop\\PythonWorkspace\\mine_sweeper\\images\\{image}.png') for image in self.images_list}
     self.root = root
     self.level = level
     self.level_dict = level_dict_dict[level]
-    self.minemap = self.init_mines()
+    self.minemap, self.minelist = self.init_mines()
     self.buttonmap = self.init_buttons()
     self.win = self.level_dict['win']
 
@@ -51,13 +51,13 @@ class mineland:
     y = coord[1]
     self.minemap[y][x] += 10
     if (self.minemap[y][x]//10) % 3 == 0: # 맵의 앞자리수가 0, 3, 6이면 아무것도 표시 안함
-      self.buttonmap[y][x]['text'] = ''
+      self.buttonmap[y][x]['image'] = self.photo_dict['block']
       self.buttonmap[y][x]['state'] = 'active'      
     elif (self.minemap[y][x]//10) % 3 == 1: # 맵의 앞자리수가 1, 4, 7이면 깃발 표시
-      self.buttonmap[y][x]['text'] = '깃'
+      self.buttonmap[y][x]['image'] = self.photo_dict['flag']
       self.buttonmap[y][x]['state'] = 'disabled'      
     else: # 맵의 앞자리수가 2, 5, 8이면 물음표 표시
-      self.buttonmap[y][x]['text'] = '?'
+      self.buttonmap[y][x]['image'] = self.photo_dict['unknown']
 
   def init_mines(self):
     '''minemap에 지뢰를 놓는다.'''
@@ -80,6 +80,9 @@ class mineland:
     y = coord[1]
     if self.minemap[y][x]%10 == 0:
       self.buttonmap[y][x] = Label(self.root, image=self.photo_dict['0'])
+      self.buttonmap[y][x].grid(row=y, column=x)
+    elif self.minemap[y][x]%10 == 9:
+      self.buttonmap[y][x] = Label(self.root, image=self.photo_dict['mine'])
       self.buttonmap[y][x].grid(row=y, column=x)
     else:
       self.buttonmap[y][x] = Label(self.root, image=self.photo_dict[f'{self.minemap[y][x]%10}'])
@@ -118,18 +121,29 @@ class mineland:
       print((x, y))
       self.buttonmap[y][x].destroy()
       self.lay_label((x, y))
-    
+
+  # 다시하기를 위한 함수들 정의
+  def again(self):
+    print('new game')
+    self.__init__(self.root, self.level)
+    self.restart_btn['image'] = self.photo_dict['neutral']
+
   def dead(self):
     print('dead')
-    pass
+    for minecoord in self.minelist:
+        self.buttonmap[minecoord[1]][minecoord[0]].destroy()
+        self.lay_label(minecoord)
+    self.restart_btn['image'] = self.photo_dict['dead']
 
   def end(self):
     print('win')
+    self.restart_btn['image'] = self.photo_dict['win']
 
 # 함수 정의
 def lay_mine(minemap, mines):
   rownum = len(minemap)
   colnum = len(minemap[0])
+  minelist = []
   temp_set = [i for i in range(rownum*colnum)]
   shuffle(temp_set)
   for mine in range(mines):
@@ -140,7 +154,9 @@ def lay_mine(minemap, mines):
     for x, block in enumerate(row):
       if block != 9:
         minemap[y][x] = assign_label_num(minemap, x, y)
-  return minemap
+      else:
+        minelist.append((x, y))
+  return minemap, minelist
 
 def assign_label_num(minemap, x, y):
   rightend = len(minemap[0])
@@ -155,10 +171,11 @@ def assign_label_num(minemap, x, y):
       mines += 1
   return mines
 
+
 # 상수 정의
 level_dict_dict = {
-  '테스트': {'row': 3, 'col': 3, 'mines': 2, 'time': 10, 'win': 7},
-  '초급': {'row': 9, 'col': 9, 'mines': 10, 'time': 3600, 'win': 71},
+  '테스트': {'row': 3, 'col': 3, 'mines': 2, 'time': 10, 'win': 7, 'size': '300x300'},
+  '초급': {'row': 9, 'col': 9, 'mines': 10, 'time': 3600, 'win': 71, 'size':'600x600'},
   '중급': {'row': 16, 'col': 16, 'mines': 40, 'time': 3600, 'win': 216},
   '고급': {'row': 16, 'col': 30, 'mines': 99, 'time': 3600, 'win': 381}
 }
