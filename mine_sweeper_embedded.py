@@ -7,6 +7,8 @@ from tkinter import *
 class mineland:
   def __init__(self, root, level):
     '''mineland 클래스 객체 init'''
+    self.images_list = [f'{i}' for i in range(0, 9)] + ['block', 'mine', 'flag', 'unknown']
+    self.photo_dict = {image : PhotoImage(file=f'C:\\Users\\82102\\Desktop\\PythonWorkspace\\mine_sweeper\\images\\{image}.png') for image in self.images_list}
     self.root = root
     self.level = level
     self.level_dict = level_dict_dict[level]
@@ -58,15 +60,17 @@ class mineland:
       self.buttonmap[y][x]['text'] = '?'
 
   def init_mines(self):
+    '''minemap에 지뢰를 놓는다.'''
     temp_minemap = [[0 for i in range(self.level_dict['col'])] for i in range(self.level_dict['row'])]
     return lay_mine(temp_minemap, self.level_dict['mines'])
 
   def init_buttons(self):
+    '''buttonmap을 생성하는 함수'''
     temp_buttonmap = [[0 for i in range(self.level_dict['col'])] for i in range(self.level_dict['row'])]
     for y, row in enumerate(temp_buttonmap):
       for x, block in enumerate(row):
         coord = (x, y)
-        temp_buttonmap[y][x] = Button(self.root, text=str(coord), width=2, height=1, command=partial(self.left_minecmd, coord))
+        temp_buttonmap[y][x] = Button(self.root, image=self.photo_dict['block'], command=partial(self.left_minecmd, coord))
         temp_buttonmap[y][x].grid(row=y, column=x)
         temp_buttonmap[y][x].bind('<Button-3>', partial(self.right_minecmd, coord))
     return temp_buttonmap
@@ -75,10 +79,10 @@ class mineland:
     x = coord[0]
     y = coord[1]
     if self.minemap[y][x]%10 == 0:
-      self.buttonmap[y][x] = Label(self.root, width=2, height=1)
+      self.buttonmap[y][x] = Label(self.root, image=self.photo_dict['0'])
       self.buttonmap[y][x].grid(row=y, column=x)
     else:
-      self.buttonmap[y][x] = Label(self.root, text=f'{self.minemap[y][x]%10}', width=2, height=1)
+      self.buttonmap[y][x] = Label(self.root, image=self.photo_dict[f'{self.minemap[y][x]%10}'])
       self.buttonmap[y][x].grid(row=y, column=x)
 
   def openblock(self, coord):
