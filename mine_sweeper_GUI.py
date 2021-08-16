@@ -3,7 +3,7 @@ from tkinter import *
 from functools import partial
 
 # 레벨 선택
-level = '초급'
+level = '테스트'
 
 root = Tk()
 root.title('Minesweeper')

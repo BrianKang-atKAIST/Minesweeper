@@ -14,7 +14,7 @@ class mineland:
     self.level_dict = level_dict_dict[level]
     self.minemap, self.minelist = self.init_mines()
     self.buttonmap = self.init_buttons()
-    self.win = self.level_dict['win']
+    self.openedset = set()
 
   def left_minecmd(self, coord):
     '''
@@ -28,16 +28,13 @@ class mineland:
       2) 라벨 pack
       3) 만약 칸이 0개의 지뢰와 맞닿아 있다면 주변 모든 칸 클릭
     '''
-    print('left', coord)
+    # print('left', coord)
     x = coord[0]
     y = coord[1]
     if self.minemap[y][x] % 10 == 9:
       self.dead()
     else:
       self.openblock(coord)
-      self.win -= 1
-      if self.win == 0:
-        self.end()
 
   def right_minecmd(self, coord, event):
     '''
@@ -46,7 +43,7 @@ class mineland:
     right클릭을 할때마다 해당되는 self.minemap 칸에 10을 더함
     10의 자리 수가 깃발, 물음표, 아무것도 없음 이 셋을 결정
     '''
-    print('right', coord)
+    # print('right', coord)
     x = coord[0]
     y = coord[1]
     self.minemap[y][x] += 10
@@ -91,7 +88,7 @@ class mineland:
   def openblock(self, coord):
     rightend = len(self.minemap[0])
     bottomend = len(self.minemap)
-    print(coord)
+    # print(coord)
     x = coord[0]
     y = coord[1]
     coordset = {coord}
@@ -118,9 +115,13 @@ class mineland:
           checkorgo = 'check'
     
     for (x, y) in coordset:
-      print((x, y))
+      # print((x, y))
       self.buttonmap[y][x].destroy()
       self.lay_label((x, y))
+      self.openedset.add((x, y))
+    
+    if len(self.openedset) == self.level_dict['row']*self.level_dict['col'] - self.level_dict['mines']:
+      self.end()
 
   # 다시하기를 위한 함수들 정의
   def again(self):
@@ -174,8 +175,8 @@ def assign_label_num(minemap, x, y):
 
 # 상수 정의
 level_dict_dict = {
-  '테스트': {'row': 3, 'col': 3, 'mines': 2, 'time': 10, 'win': 7, 'size': '300x300'},
-  '초급': {'row': 9, 'col': 9, 'mines': 10, 'time': 3600, 'win': 71, 'size':'600x600'},
-  '중급': {'row': 16, 'col': 16, 'mines': 40, 'time': 3600, 'win': 216},
-  '고급': {'row': 16, 'col': 30, 'mines': 99, 'time': 3600, 'win': 381}
+  '테스트': {'row': 3, 'col': 3, 'mines': 2, 'time': 10, 'size': '300x300'},
+  '초급': {'row': 9, 'col': 9, 'mines': 10, 'time': 3600, 'size':'600x600'},
+  '중급': {'row': 16, 'col': 16, 'mines': 40, 'time': 3600},
+  '고급': {'row': 16, 'col': 30, 'mines': 99, 'time': 3600}
 }
