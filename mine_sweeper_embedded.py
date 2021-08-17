@@ -2,6 +2,7 @@
 from random import shuffle
 from functools import partial
 from tkinter import *
+import time
 
 # 클래스 정의
 class mineland:
@@ -15,6 +16,11 @@ class mineland:
     self.minemap, self.minelist = self.init_mines()
     self.buttonmap = self.init_buttons()
     self.openedset = set()
+    # 라벨 마우스 양쪽 버튼으로 클릭 시 나오는 이펙트 구현을 위한 상수들
+    self.lefton = False
+    self.righton = False
+    self.lefttime = 0
+    self.righttime = 0
 
   def left_minecmd(self, coord):
     '''
@@ -83,6 +89,8 @@ class mineland:
       self.buttonmap[y][x].grid(row=y, column=x)
     else:
       self.buttonmap[y][x] = Label(self.root, image=self.photo_dict[f'{self.minemap[y][x]%10}'])
+      self.buttonmap[y][x].bind('<Button-1>', partial(self.label_leftclick, coord))
+      self.buttonmap[y][x].bind('<Button-3>', partial(self.label_rightclick, coord))
       self.buttonmap[y][x].grid(row=y, column=x)
 
   def openblock(self, coord):
@@ -139,6 +147,53 @@ class mineland:
   def end(self):
     print('win')
     self.restart_btn['image'] = self.photo_dict['win']
+
+  # 라벨 양쪽클릭 이벤트를 위한 함수
+  def label_leftclick(self, coord, event):
+    print('labelleft')
+    self.lefton = True
+    self.lefttime = time.time()
+    if self.righton:
+      if time.time() - self.righttime < 0.05:
+        self.label_bothclick(coord)
+      self.righton = False
+    else:
+      pass
+
+  def label_rightclick(self, coord, event):
+    print('labelright')
+    self.righton = True
+    self.righttime = time.time()
+    if self.lefton:
+      if time.time() - self.lefttime < 0.05:
+        self.label_bothclick(coord)
+      self.lefton = False
+    else:
+      pass
+
+  def label_bothclick(self, coord):
+    rightend = len(self.minemap[0])
+    bottomend = len(self.minemap)
+    x = coord[0]
+    y = coord[1]
+    print('bothclicked!')
+    self.righttime = self.lefttime = False
+    temp_set = set()
+    for i in range(max(0, x-1), min(x+2, rightend)):
+      for j in range(max(0, y-1), min(y+2, bottomend)):
+        temp_set.add((i, j))
+    temp_set.remove(coord)
+    temp_set -= self.openedset
+    for coordinate in set(temp_set):
+      if self.buttonmap[coordinate[1]][coordinate[0]]['state'] == 'disabled':
+        temp_set.remove(coordinate)
+      elif self.minemap[coordinate[1]][coordinate[0]] % 10 == 9:
+        self.dead()
+        pass
+    
+    while temp_set:
+      self.openblock(temp_set.pop())
+      temp_set -= self.openedset
 
 # 함수 정의
 def lay_mine(minemap, mines):
