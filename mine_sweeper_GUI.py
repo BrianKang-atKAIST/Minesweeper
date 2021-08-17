@@ -3,7 +3,7 @@ from tkinter import *
 from functools import partial
 
 # 레벨 선택
-level = '테스트'
+level = input('난이도를 선택하세요: ')
 
 root = Tk()
 root.title('Minesweeper')
@@ -18,7 +18,7 @@ TopFrame.pack(side='top', fill='x')
 MineFrame = Frame(root)
 MineFrame.pack(side='top')
 
-Minesweeper = mineland(MineFrame, level)
+Minesweeper = mineland(MineFrame, level, 30)
 print(Minesweeper.minemap)
 
 # 다시하기 버튼은 mineland 클래스 안에 넣어둔다.

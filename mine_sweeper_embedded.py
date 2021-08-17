@@ -6,12 +6,13 @@ import time
 
 # 클래스 정의
 class mineland:
-  def __init__(self, root, level):
+  def __init__(self, root, level, blockpixel):
     '''mineland 클래스 객체 init'''
     self.images_list = [f'{i}' for i in range(0, 9)] + [f'{i}' for i in range(0, 9)] + ['block', 'mine', 'flag', 'unknown', 'neutral', 'dead', 'win']
-    self.photo_dict = {image : PhotoImage(file=f'C:\\Users\\82102\\Desktop\\PythonWorkspace\\mine_sweeper\\images\\{image}.png') for image in self.images_list}
+    self.photo_dict = {image : PhotoImage(file=f'C:\\Users\\82102\\Desktop\\PythonWorkspace\\mine_sweeper\\images{blockpixel}px\\{image}.png') for image in self.images_list}
     self.root = root
     self.level = level
+    self.blockpixel = blockpixel
     self.level_dict = level_dict_dict[level]
     self.minemap, self.minelist = self.init_mines()
     self.buttonmap = self.init_buttons()
@@ -134,7 +135,7 @@ class mineland:
   # 다시하기를 위한 함수들 정의
   def again(self):
     print('new game')
-    self.__init__(self.root, self.level)
+    self.__init__(self.root, self.level, self.blockpixel)
     self.restart_btn['image'] = self.photo_dict['neutral']
 
   def dead(self):
@@ -232,6 +233,6 @@ def assign_label_num(minemap, x, y):
 level_dict_dict = {
   '테스트': {'row': 3, 'col': 3, 'mines': 2, 'time': 10, 'size': '300x300'},
   '초급': {'row': 9, 'col': 9, 'mines': 10, 'time': 3600, 'size':'600x600'},
-  '중급': {'row': 16, 'col': 16, 'mines': 40, 'time': 3600},
+  '중급': {'row': 16, 'col': 16, 'mines': 40, 'time': 3600, 'size': '1000x1000'},
   '고급': {'row': 16, 'col': 30, 'mines': 99, 'time': 3600}
 }
