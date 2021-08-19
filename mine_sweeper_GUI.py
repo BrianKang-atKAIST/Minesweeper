@@ -3,8 +3,8 @@ from tkinter import *
 from functools import partial
 
 # 레벨 선택
-level = input('난이도를 선택하세요: ')
-
+# level = input('난이도를 선택하세요: ')
+level = '고급'
 root = Tk()
 root.title('Minesweeper')
 root.geometry(level_dict_dict[level]['size']) # 가로 * 세로

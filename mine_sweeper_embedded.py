@@ -8,20 +8,26 @@ import time
 class mineland:
   def __init__(self, root, level, blockpixel):
     '''mineland 클래스 객체 init'''
+    # 이미지 다운로드
     self.images_list = [f'{i}' for i in range(0, 9)] + [f'{i}' for i in range(0, 9)] + ['block', 'mine', 'flag', 'unknown', 'neutral', 'dead', 'win']
     self.photo_dict = {image : PhotoImage(file=f'C:\\Users\\82102\\Desktop\\PythonWorkspace\\mine_sweeper\\images{blockpixel}px\\{image}.png') for image in self.images_list}
+    # 주요 인수들을 클래스 속성으로 저장
     self.root = root
     self.level = level
     self.blockpixel = blockpixel
     self.level_dict = level_dict_dict[level]
-    self.minemap, self.minelist = self.init_mines()
+    self.minemap, self.mineset = self.init_mines()
     self.buttonmap = self.init_buttons()
     self.openedset = set()
     # 라벨 마우스 양쪽 버튼으로 클릭 시 나오는 이펙트 구현을 위한 상수들
-    self.lefton = False
-    self.righton = False
-    self.lefttime = 0
-    self.righttime = 0
+    self.lefton = False # 왼쪽 버튼을 눌렀나?
+    self.righton = False # 오른쪽 버튼을 눌렀나?
+    self.lefttime = 0 # 왼쪽 버튼을 언제 눌렀나?
+    self.righttime = 0 # 오른쪽 버튼을 언제 눌렀나?
+    # 게임 종료를 위한 상수들
+    self.detected_mineset = set()
+    self.alldetected = False
+    self.allopened = False
 
   def left_minecmd(self, coord):
     '''
@@ -57,11 +63,24 @@ class mineland:
     if (self.minemap[y][x]//10) % 3 == 0: # 맵의 앞자리수가 0, 3, 6이면 아무것도 표시 안함
       self.buttonmap[y][x]['image'] = self.photo_dict['block']
       self.buttonmap[y][x]['state'] = 'active'      
-    elif (self.minemap[y][x]//10) % 3 == 1: # 맵의 앞자리수가 1, 4, 7이면 깃발 표시
+    # 맵의 앞자리수가 1, 4, 7이면 깃발 표시, self.detected_mineset에 그 칸 넣음
+    elif (self.minemap[y][x]//10) % 3 == 1:
       self.buttonmap[y][x]['image'] = self.photo_dict['flag']
-      self.buttonmap[y][x]['state'] = 'disabled'      
-    else: # 맵의 앞자리수가 2, 5, 8이면 물음표 표시
+      self.buttonmap[y][x]['state'] = 'disabled'
+      if coord in self.mineset:
+        self.detected_mineset.add(coord)
+    # 맵의 앞자리수가 2, 5, 8이면 물음표 표시, self.detected_mineset에서 그 칸 제거
+    else: 
       self.buttonmap[y][x]['image'] = self.photo_dict['unknown']
+      if coord in self.mineset:
+        self.detected_mineset.remove(coord)
+    # print(self.detected_mineset)
+    # print(self.mineset)
+    # 모든 지뢰 칸에만 깃발을 꽂았다면
+    if self.mineset == self.detected_mineset:
+      self.alldetected = True
+      if self.allopened: # allopened도 True라면? 끝
+        self.end()
 
   def init_mines(self):
     '''minemap에 지뢰를 놓는다.'''
@@ -128,9 +147,11 @@ class mineland:
       self.buttonmap[y][x].destroy()
       self.lay_label((x, y))
       self.openedset.add((x, y))
-    
+    # 만약 모든 지뢰가 아닌 칸을 열었다면
     if len(self.openedset) == self.level_dict['row']*self.level_dict['col'] - self.level_dict['mines']:
-      self.end()
+      self.allopened = True
+      if self.alldetected:
+        self.end()
 
   # 다시하기를 위한 함수들 정의
   def again(self):
@@ -140,7 +161,7 @@ class mineland:
 
   def dead(self):
     print('dead')
-    for minecoord in self.minelist:
+    for minecoord in self.mineset:
         self.buttonmap[minecoord[1]][minecoord[0]].destroy()
         self.lay_label(minecoord)
     self.restart_btn['image'] = self.photo_dict['dead']
@@ -200,7 +221,7 @@ class mineland:
 def lay_mine(minemap, mines):
   rownum = len(minemap)
   colnum = len(minemap[0])
-  minelist = []
+  mineset = set()
   temp_set = [i for i in range(rownum*colnum)]
   shuffle(temp_set)
   for mine in range(mines):
@@ -212,10 +233,13 @@ def lay_mine(minemap, mines):
       if block != 9:
         minemap[y][x] = assign_label_num(minemap, x, y)
       else:
-        minelist.append((x, y))
-  return minemap, minelist
+        mineset.add((x, y))
+  return minemap, mineset
 
 def assign_label_num(minemap, x, y):
+  '''
+  지뢰가 없는 칸에 대하여 그 칸의 라벨 넘버를 
+  '''
   rightend = len(minemap[0])
   bottomend = len(minemap)
   temp_list = []
@@ -228,11 +252,10 @@ def assign_label_num(minemap, x, y):
       mines += 1
   return mines
 
-
 # 상수 정의
 level_dict_dict = {
   '테스트': {'row': 3, 'col': 3, 'mines': 2, 'time': 10, 'size': '300x300'},
-  '초급': {'row': 9, 'col': 9, 'mines': 10, 'time': 3600, 'size':'600x600'},
-  '중급': {'row': 16, 'col': 16, 'mines': 40, 'time': 3600, 'size': '1000x1000'},
-  '고급': {'row': 16, 'col': 30, 'mines': 99, 'time': 3600}
+  '초급': {'row': 9, 'col': 9, 'mines': 10, 'time': 3600, 'size':'330x420'},
+  '중급': {'row': 16, 'col': 16, 'mines': 40, 'time': 3600, 'size': '580x670'},
+  '고급': {'row': 16, 'col': 30, 'mines': 99, 'time': 3600, 'size': '1100x670'}
 }
