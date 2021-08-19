@@ -1,4 +1,5 @@
 # 모듈 임포트
+from os import terminal_size
 from random import shuffle
 from functools import partial
 import random
@@ -7,20 +8,17 @@ import time
 
 # 클래스 정의
 class mineland:
-  def __init__(self, root, level, blockpixel):
+  def __init__(self, root, level, blockpixel, photo_dict, newgame=True):
     '''mineland 클래스 객체 init'''
-
-    # 이미지 다운로드
-    self.images_list = [f'{i}' for i in range(0, 9)] + [f'{i}' for i in range(0, 9)] + ['block', 'mine', 'flag', 'unknown', 'neutral', 'dead', 'win']
-    self.photo_dict = {image : PhotoImage(file=f'C:\\Users\\82102\\Desktop\\PythonWorkspace\\mine_sweeper\\images{blockpixel}px\\{image}.png') for image in self.images_list}
     # 주요 인수들을 클래스 속성으로 저장
     self.root = root
     self.level = level
     self.blockpixel = blockpixel
+    self.photo_dict = photo_dict
     self.level_dict = level_dict_dict[level]
     # 아래의 식에서 self.minemap, self.mineset, self.buttonmap_dict이 정의됨
-    self.lay_mine()
-    self.init_buttons()
+    self.init_minemap_and_mineset(refresh=newgame)
+    self.init_buttons(refresh=newgame)
     self.openedset = set()
     # 라벨 마우스 양쪽 버튼으로 클릭 시 나오는 이펙트 구현을 위한 상수들
     self.lefton = False # 왼쪽 버튼을 눌렀나?
@@ -81,13 +79,19 @@ class mineland:
       if self.allopened: # allopened도 True라면? 끝
         self.end()
 
-  def init_buttons(self):
+  def init_buttons(self, refresh):
     '''buttonmap을 생성하는 함수'''
+    try:
+      if refresh:
+        for button in self.buttonmap_dict.values():
+          button.destroy()
+    except AttributeError:
+      refresh = False # 이것은 그냥 아무 의미가 없다.
     temp_buttonmap_dict = {(i, j): 0 for i in range(self.level_dict['col']) for j in range(self.level_dict['row'])}
     for coord in temp_buttonmap_dict.keys():
       x = coord[0]
       y = coord[1]
-      temp_buttonmap_dict[coord] = Button(self.root, image=self.photo_dict['block'], command=partial(self.left_minecmd, coord), padx=0, pady=0)
+      temp_buttonmap_dict[coord] = Button(self.root, image=self.photo_dict['block'], command=partial(self.left_minecmd, coord), padx=0, pady=0, borderwidth=0)
       temp_buttonmap_dict[coord].grid(row=y, column=x)
       temp_buttonmap_dict[coord].bind('<Button-3>', partial(self.right_minecmd, coord))
     self.buttonmap_dict = temp_buttonmap_dict
@@ -96,10 +100,10 @@ class mineland:
     x = coord[0]
     y = coord[1]
     if self.minemap[coord]%10 == 0:
-      self.buttonmap_dict[coord] = Label(self.root, image=self.photo_dict['0'], padx=0, pady=0)
+      self.buttonmap_dict[coord] = Label(self.root, image=self.photo_dict['0'], padx=0, pady=0, borderwidth=0)
       self.buttonmap_dict[coord].grid(row=y, column=x)
     elif self.minemap[coord]%10 == 9:
-      self.buttonmap_dict[coord] = Label(self.root, image=self.photo_dict['mine'], padx=0, pady=0)
+      self.buttonmap_dict[coord] = Label(self.root, image=self.photo_dict['mine'], padx=0, pady=0, borderwidth=0)
       self.buttonmap_dict[coord].grid(row=y, column=x)
     else:
       self.buttonmap_dict[coord] = Label(self.root, image=self.photo_dict[f'{self.minemap[coord]%10}'], padx=0, pady=0, borderwidth=0)
@@ -146,9 +150,14 @@ class mineland:
         self.end()
 
   # 다시하기를 위한 함수들 정의
-  def again(self):
+  def same_map_again(self):
+    print('old game')
+    self.__init__(self.root, self.level, self.blockpixel, self.photo_dict, newgame=False)
+    self.restart_btn['image'] = self.photo_dict['neutral']
+
+  def new_map_game(self, level):
     print('new game')
-    self.__init__(self.root, self.level, self.blockpixel)
+    self.__init__(self.root, level, self.blockpixel, self.photo_dict, newgame=True)
     self.restart_btn['image'] = self.photo_dict['neutral']
 
   def dead(self):
@@ -208,20 +217,21 @@ class mineland:
       self.openblock(temp_set.pop())
       temp_set -= self.openedset
 
-  def lay_mine(self):
-    temp_minemap = {(i, j): 0 for i in range(self.level_dict['col']) for j in range(self.level_dict['row'])}
-    temp_mineset = set()
-    shuffle(coordinates:=list(temp_minemap.keys()))
-    temp_mineset = set(coordinates[:self.level_dict['mines']])
-    self.minemap = dict(temp_minemap)
-    self.mineset = set()
-    for minecoord in temp_mineset:
-      self.minemap[minecoord] = 9
-    for coord in temp_minemap.keys():
-      if self.minemap[coord] != 9:
-        self.minemap[coord] = self.assign_label_num(coord[0], coord[1])
-      else:
-        self.mineset.add(coord)
+  def init_minemap_and_mineset(self, refresh):
+    if refresh:
+      temp_minemap = {(i, j): 0 for i in range(self.level_dict['col']) for j in range(self.level_dict['row'])}
+      temp_mineset = set()
+      shuffle(coordinates:=list(temp_minemap.keys()))
+      temp_mineset = set(coordinates[:self.level_dict['mines']])
+      self.minemap = dict(temp_minemap)
+      self.mineset = set()
+      for minecoord in temp_mineset:
+        self.minemap[minecoord] = 9
+      for coord in temp_minemap.keys():
+        if self.minemap[coord] != 9:
+          self.minemap[coord] = self.assign_label_num(coord[0], coord[1])
+        else:
+          self.mineset.add(coord)
 
   def assign_label_num(self, x, y):
     '''
@@ -238,8 +248,6 @@ class mineland:
       if self.minemap[temp_coord] % 10 == 9:
         mines += 1
     return mines
-
-# 함수 정의
 
 # 상수 정의
 level_dict_dict = {
