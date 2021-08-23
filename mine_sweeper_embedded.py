@@ -1,13 +1,14 @@
 # 모듈 임포트
-from os import terminal_size
 from random import shuffle
 from functools import partial
 import random
 from tkinter import *
 import time
+import timetest
 
 # 클래스 정의
 class mineland:
+  @timetest.timetest
   def __init__(self, root, level, blockpixel, photo_dict, newgame=True):
     '''mineland 클래스 객체 init'''
     # 주요 인수들을 클래스 속성으로 저장
@@ -244,10 +245,10 @@ class mineland:
     for i in range(max(x-1, 0), min(col, x+2)):
       for j in range(max(y-1, 0), min(row, y+2)):
         temp_set.add((i, j))
-    for temp_coord in temp_set:
-      if self.minemap[temp_coord] % 10 == 9:
-        mines += 1
+    mines = [self.minemap[coord] for coord in temp_set].count(9)
     return mines
+
+# 함수 정의
 
 # 상수 정의
 level_dict_dict = {

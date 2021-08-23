@@ -25,12 +25,14 @@ def newgamebtncmd():
   Minesweeper.new_map_game(level)
   root.geometry(level_dict_dict[level]['size'])
 
-# 레벨 선택
-# level = input('난이도를 선택하세요: ')
-level = '중급'
 root = Tk()
 root.title('Minesweeper')
-root.geometry(level_dict_dict[level]['size']) # 가로 * 세로
+# 레벨 선택
+# level = input('난이도를 선택하세요: ')
+level_var = StringVar()
+level_var.set('중급')
+
+root.geometry(level_dict_dict[level_var.get()]['size']) # 가로 * 세로
 
 # blockpixel 값에 따라 들어가는 이미지가 달라진다.
 blockpixel = 30
@@ -47,11 +49,8 @@ TopFrame.pack(side='top', fill='x')
 MineFrame = Frame(root)
 MineFrame.pack(side='top')
 
-start_time = time.time()
-Minesweeper = mineland(MineFrame, level, blockpixel, photo_dict, newgame=True)
-end_time = time.time()
+Minesweeper = mineland(MineFrame, level_var.get(), blockpixel, photo_dict, newgame=True)
 print(Minesweeper.minemap)
-print(end_time - start_time)
 
 # 게임, 도움말 탭이 있는 메뉴
 menu = Menu(root)
@@ -59,7 +58,6 @@ menu_game = Menu(menu, tearoff=0)
 menu_game.add_command(label='새 게임', state='active', command=newgamebtncmd)
 menu_game.add_command(label='현재 게임판으로 다시 게임', state='active', command=Minesweeper.same_map_again)
 menu_game.add_separator()
-level_var = StringVar() # 레벨?
 menu_game.add_radiobutton(label='초급', value='초급', variable=level_var)
 menu_game.add_radiobutton(label='중급', value='중급', variable=level_var)
 menu_game.add_radiobutton(label='고급', value='고급', variable=level_var)
